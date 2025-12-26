@@ -3,21 +3,23 @@ import User from '../models/User.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import PDFDocument from 'pdfkit';
-import fs from 'fs';
+import Category from '../models/Category.js';
 
 // Get Admin Dashboard
 export const getAdminDashboard = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
     const totalProducts = await Product.countDocuments();
+    const totalCategories = await Category.countDocuments();
     const totalOrders = await Order.countDocuments();
     const totalRevenueData = await Order.aggregate([
-      { $match: { isPaid: true } },
-      { $group: { _id: null, total: { $sum: '$totalPrice' } } },
+      { $match: { status: "paid" } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } },
     ]);
     const totalRevenue = totalRevenueData[0]?.total || 0;
 
     // Orders by status
+
     const orderStatusCounts = await Order.aggregate([
       {
         $group: {
@@ -44,6 +46,7 @@ export const getAdminDashboard = async (req, res) => {
     res.status(200).json({
       totalUsers,
       totalProducts,
+      totalCategories,
       totalOrders,
       totalRevenue,
       orderStatusSummary: statusSummary,
@@ -72,12 +75,15 @@ export const getMonthlyRevenue = async (req, res) => {
 
     // Convert month numbers to names (optional)
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const formatted = revenue.map(r => ({
-      month: monthNames[r._id - 1],
-      totalRevenue: r.totalRevenue
-    }));
+    const getMonthlyRevenue = monthNames.map((name, index)=>{
+      const monthData = revenue.filter(r=> r._id === index + 1);
+      return{
+        month: name,
+        totalRevenue: monthData.length ? monthData[0].totalRevenue : 0
+      }
+    })
 
-    res.json(formatted);
+    res.json(getMonthlyRevenue);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -120,11 +126,11 @@ export const getLowStockProducts = async (req, res) => {
 export const getTopSellingProducts = async (req, res) => {
   try {
     const topProducts = await Order.aggregate([
-      { $unwind: "$items" },
+      { $unwind: "$orderItems" },
       {
         $group: {
-          _id: "$items.productId",
-          totalSold: { $sum: "$items.quantity" }
+          _id: "$orderItems.product",
+          totalSold: { $sum: "$orderItems.qty" }
         }
       },
       {
@@ -138,6 +144,7 @@ export const getTopSellingProducts = async (req, res) => {
       { $unwind: "$productDetails" },
       {
         $project: {
+          _id: 0,
           productName: "$productDetails.name",
           unitsSold: "$totalSold"
         }
@@ -267,7 +274,6 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch users" });
   }
 };
-
 
 // Get Total Orders Count (Admin)
 export const getTotalOrdersCount = async (req, res) => {

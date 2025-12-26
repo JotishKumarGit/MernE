@@ -1,0 +1,34 @@
+.bg-gradient-green {
+  background: linear-gradient(135deg, #28a745, #6fdc8c);
+}
+
+.bg-gradient-blue {
+  background: linear-gradient(135deg, #007bff, #5fa8ff);
+}
+
+.bg-gradient-orange {
+  background: linear-gradient(135deg, #fd7e14, #ffb347);
+}
+
+.bg-gradient-purple {
+  background: linear-gradient(135deg, #6f42c1, #b08cff);
+}
+
+.bg-gradient-cyan {
+  background: linear-gradient(135deg, #17a2b8, #5ddcff);
+}
+
+/* 🔴 Alerts / Critical */
+.bg-gradient-red {
+  background: linear-gradient(135deg, #dc3545, #ff6b6b);
+}
+
+/* 🌸 Soft / Info */
+.bg-gradient-pink {
+  background: linear-gradient(135deg, #e83e8c, #ff9acb);
+}
+
+/* 🌙 Dark modern */
+.bg-gradient-dark {
+  background: linear-gradient(135deg, #343a40, #6c757d);
+}

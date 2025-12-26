@@ -16,7 +16,6 @@ router.get('/orders/aov', getAOV);
 router.get('/users', protect, adminOnly, getAllUsers);
 router.get('/total-orders', protect, adminOnly, getTotalOrdersCount);
 
-
 // invoice generate
 router.get('/invoice/:id', protect, adminOnly, generateInvoice);
 
