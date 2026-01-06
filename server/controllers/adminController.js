@@ -74,7 +74,7 @@ export const getMonthlyRevenue = async (req, res) => {
       { $sort: { "_id": 1 } }
     ]);
 
-    const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     const formatted = monthNames.map((name, index) => {
       const data = revenue.find(r => r._id === index + 1);
@@ -278,8 +278,19 @@ export const generateInvoice = async (req, res) => {
 // get all user 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password"); // don’t send password
-    res.json(users);
+    const page = Number(req.query.page || 1);
+    const limit = Number(req.query.limit || 9);
+    const skip = (page - 1) * limit;
+
+    const totalUsers = await User.countDocuments();
+
+    const users = await User.find().select("-password").sort({ createdAt: -1 }).skip(skip).limit(limit);
+    res.json({
+      users,
+      currentPage: page,
+      totalPages: Math.ceil(totalUsers / limit),
+      totalUsers
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch users" });
   }

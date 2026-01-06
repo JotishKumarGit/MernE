@@ -4,7 +4,18 @@ import Category from '../models/Category.js';
 // Create category (Admin only)
 export const createCategory = async (req, res) => {
   try {
-    const category = new Category(req.body);
+    const { name, description } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Category image is required" });
+    }
+
+    const category = new Category({
+      name,
+      description,
+      image: `/uploads/${req.file.filename}`, // ✅ LOCAL IMAGE PATH
+    });
+
     await category.save();
     res.status(201).json(category);
   } catch (error) {
@@ -15,8 +26,19 @@ export const createCategory = async (req, res) => {
 // Get all categories (Public)
 export const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find().sort({ name: 1 });
-    res.status(200).json(categories);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 9;
+    const skip = (page - 1) * limit;
+
+    const totalCategories = await Category.countDocuments();
+
+    const categories = await Category.find().sort({ createdAt: -1 }).skip(skip).limit(limit);
+    res.status(200).json(
+    {  categories, 
+      currentPage: page,
+      totalPages: Math.ceil(totalCategories / limit),
+      totalCategories
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -37,10 +59,25 @@ export const getCategoryById = async (req, res) => {
 // Update category (Admin only)
 export const updateCategory = async (req, res) => {
   try {
-    const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    if (!category) return res.status(404).json({ message: 'Category not found' });
+    const updateData = {
+      name: req.body.name,
+      description: req.body.description,
+    };
+
+    // ✅ agar new image aaye to update karo
+    if (req.file) {
+      updateData.image = `/uploads/${req.file.filename}`;
+    }
+
+    const category = await Category.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
 
     res.status(200).json(category);
   } catch (error) {

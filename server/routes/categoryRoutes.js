@@ -1,6 +1,7 @@
 import express from 'express';
 import { createCategory, deleteCategory, getAllCategories, getCategoriesWithProducts, getCategoryById, updateCategory } from '../controllers/categoryController.js';
 import { protect ,adminOnly} from '../middlewares/authMiddleware.js';
+import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
@@ -10,8 +11,8 @@ router.get('/:id', getCategoryById);
 router.get("/with-products", getCategoriesWithProducts);
 
 // protected routes only for admin 
-router.post('/', protect , adminOnly, createCategory);
-router.put('/:id',protect, adminOnly, updateCategory);
+router.post("/",protect,adminOnly,upload.single("image"),createCategory);
+router.put("/:id",protect,adminOnly,upload.single("image"),updateCategory);
 router.delete('/:id', protect, adminOnly, deleteCategory);
 
 

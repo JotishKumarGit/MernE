@@ -1,5 +1,4 @@
 // frontend/src/pages/admin/Categories.jsx
-
 import React, { useEffect, useState } from "react";
 import { Modal, Button, Table, Form, Card, Spinner } from "react-bootstrap";
 import api from "../../api/apiClient";
@@ -7,19 +6,23 @@ import { toast } from "react-toastify";
 
 const Categories = () => {
   // State management
-  const [categories, setCategories] = useState([]); // All categories
-  const [loading, setLoading] = useState(false); // Loader for API calls
-  const [showModal, setShowModal] = useState(false); // Modal open/close
-  const [editingCategory, setEditingCategory] = useState(null); // Category being edited
-  const [formData, setFormData] = useState({ name: "", description: "" }); // Form values
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [formData, setFormData] = useState({ name: "", description: "" });
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 9;
 
   // Fetch categories from backend
   const fetchCategories = async () => {
     try {
       setLoading(true);
       // NOTE: backend se aapke controller `getAllCategories` me array directly return ho rha hai
-      const { data } = await api.get("/categories");
-      setCategories(data || []); // data.categories ki jagah direct data
+      const { data } = await api.get(`/categories?page=${page}&limit=${limit}`);
+      setCategories(data.categories || []);
+      setTotalPages(data.totalPages || 1);
     } catch (err) {
       console.error("Error fetching categories:", err.response?.data || err);
     } finally {
@@ -30,7 +33,7 @@ const Categories = () => {
   // Component mount hone par fetch call kare
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [page]);
 
   // Handle form input change 
   const handleChange = (e) => {
@@ -126,7 +129,7 @@ const Categories = () => {
                 {categories.length > 0 ? (
                   categories.map((cat, index) => (
                     <tr key={cat._id}>
-                      <td>{index + 1}</td>
+                      <td>{(page - 1) * limit + index + 1}</td>
                       <td>{cat.name}</td>
                       <td>{cat.description}</td>
                       <td>{new Date(cat.createdAt).toLocaleDateString()}</td>
@@ -146,6 +149,13 @@ const Categories = () => {
               </tbody>
             </Table>
           )}
+          <div className="d-flex justify-content-center mt-3">
+            <Button variant="secondary" disabled={page === 1} onClick={() => setPage(page - 1)} > Prev</Button>
+
+            <span className="mx-3 mt-2"> Page {page} of {totalPages}</span>
+            <Button
+              variant="secondary" disabled={page === totalPages} onClick={() => setPage(page + 1)} > Next </Button>
+          </div>
         </Card.Body>
       </Card>
 
@@ -169,6 +179,7 @@ const Categories = () => {
               <Form.Label>Description</Form.Label>
               <Form.Control as="textarea" rows={3} name="description" value={formData.description} onChange={handleChange} placeholder="Enter description" />
             </Form.Group>
+            
           </Form>
         </Modal.Body>
         <Modal.Footer>

@@ -133,12 +133,26 @@ export const markOrderAsPaid = async (req, res) => {
 ===================================================== */
 export const getMyOrders = async (req, res) => {
   try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const userId = req.user._id;
+
+    const totalOrders = await Order.countDocuments();
+
     const orders = await Order.find({ user: userId })
       .populate("orderItems.product", "name price image")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    res.status(200).json(orders);
+    res.status(200).json({
+      orders,
+      currentPage: page,
+      totalPages: Math.ceil(totalOrders / limit),
+      totalOrders,
+    });
   } catch (error) {
     console.error("Get My Orders Error:", error);
     res.status(500).json({ message: error.message });

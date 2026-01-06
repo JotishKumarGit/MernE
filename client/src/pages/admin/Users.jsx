@@ -5,11 +5,15 @@ import api from "../../api/apiClient";
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPages] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 5;
 
   const fetchUsers = async () => {
     try {
-      const { data } = await api.get("/admin/users");
-      setUsers(data || []);
+      const { data } = await api.get(`/admin/users?page=${page}&limit=${limit}`);
+      setUsers(data.users || []);
+      setTotalPages(data.totalPages);
     } catch (err) {
       console.error("Error fetching users:", err);
     } finally {
@@ -19,7 +23,7 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page]);
 
   return (
     <div className="container mt-4">
@@ -52,7 +56,7 @@ const Users = () => {
                 {users.length > 0 ? (
                   users.map((user, index) => (
                     <tr key={user._id}>
-                      <td>{index + 1}</td>
+                      <td>{(page - 1) * limit + index + 1}</td>
                       <td>{user.name}</td>
                       <td>{user.email}</td>
                       <td>{user.role}</td>
@@ -69,6 +73,20 @@ const Users = () => {
               </tbody>
             </Table>
           )}
+          {/* pagination */}
+          <nav>
+            <ul className="pagination justify-content-center">
+              <li className={`page-item ${page === 1 ? "disabled" : ""}`}>
+                <button className="page-link" onClick={() => setPages(page - 1)}>Previous</button>
+              </li>
+              <li className="page-item active">
+                <span className="page-link">{page} / {totalPages}</span>
+              </li>
+              <li className={`page-item ${page === totalPages ? "disabled" : ""}`}>
+                <button className="page-link" onClick={() => setPages(page + 1)}>Next</button>
+              </li>
+            </ul>
+          </nav>
         </Card.Body>
       </Card>
     </div>

@@ -13,7 +13,7 @@ import baner_3 from '/baner_new_3.jpg';
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState([]);
-  const [catProducts, setCatProducts] = useState({}); // { catId: [p,p...] }
+  const [catProducts, setCatProducts] = useState({}); 
   const [data, setData] = useState({ products: [], total: 0, page: 1, pages: 1 });
   const [loading, setLoading] = useState(false);
 
@@ -25,9 +25,9 @@ export default function Home() {
     const load = async () => {
       try {
         const res = await api.get("/categories");
-        setCategories(res.data || []);
+        setCategories(res.data.categories || []);
         // optional: limit to 6 categories to save requests
-        const topCats = (res.data || []).slice(0, 6);
+        const topCats = (res.data.categories || []).slice(0, 6);
         const promises = topCats.map((c) =>
           api.get(`/products?category=${c._id}&limit=4`)
         );

@@ -1,7 +1,5 @@
-
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
-
 
 // create product
 export const createProduct = async (req, res) => {
@@ -21,12 +19,8 @@ export const createProduct = async (req, res) => {
 
     // ✅ Create product with image path
     const product = new Product({
-      name,
-      description,
-      price,
-      stock,
-      category,
-      image: `/uploads/${req.file.filename}`, // <-- IMPORTANT
+      name,description,price,stock,category,
+      image: `/uploads/${req.file.filename}`,
       createdBy: req.user._id,
     });
 
@@ -41,8 +35,8 @@ export const createProduct = async (req, res) => {
 export const getAllProducts = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
-    const limit = req.query.limit ? Number(req.query.limit) : 0; // 0 means no limit
-    const skip = limit > 0 ? (page - 1) * limit : 0;
+    const limit = Number(req.query.limit) || 6;
+    const skip = (page - 1) * limit;
 
     const keyword = req.query.keyword
       ? {
@@ -57,11 +51,13 @@ export const getAllProducts = async (req, res) => {
       ? { category: req.query.category }
       : {};
 
-    const minPrice = req.query.minPrice ? Number(req.query.minPrice) : 0;
-    const maxPrice = req.query.maxPrice ? Number(req.query.maxPrice) : Infinity;
-    const priceFilter = {
-      price: { $gte: minPrice, $lte: maxPrice },
-    };
+    const minPrice = req.query.minPrice
+      ? Number(req.query.minPrice)
+      : 0;
+
+    const maxPrice = req.query.maxPrice
+      ? Number(req.query.maxPrice)
+      : Number.MAX_SAFE_INTEGER;
 
     const ratingFilter = req.query.minRating
       ? { averageRating: { $gte: Number(req.query.minRating) } }
@@ -76,36 +72,30 @@ export const getAllProducts = async (req, res) => {
     const filterQuery = {
       ...keyword,
       ...categoryFilter,
-      ...priceFilter,
+      price: { $gte: minPrice, $lte: maxPrice },
       ...ratingFilter,
     };
 
-    const total = await Product.countDocuments(filterQuery);
+    const totalProducts = await Product.countDocuments(filterQuery);
+    const totalPages = Math.ceil(totalProducts / limit) || 1;
 
-    let query = Product.find(filterQuery)
+    const products = await Product.find(filterQuery)
       .populate("createdBy", "name email")
       .populate("category", "name")
       .sort(sort)
-      .skip(skip);
-
-    if (limit > 0) {
-      query = query.limit(limit);
-    }
-
-    const products = await query;
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
-      total,
-      page,
-      pages: limit > 0 ? Math.ceil(total / limit) : 1,
+      totalProducts,
+      currentPage: page,
+      totalPages,
       products,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
-
 
 //  Update product by ID (Admin only)
 export const updateProduct = async (req, res) => {
@@ -128,8 +118,6 @@ export const updateProduct = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
-
-
 
 // Get single product by ID
 export const getProductById = async (req, res) => {
