@@ -20,15 +20,14 @@ const CategorySlider = ({ categories = [], active, onSelect }) => {
   };
 
   return (
-    <div className="category-slider-wrapper" style={{backgroundColor: ""}}
->
+    <div className="category-slider-wrapper" style={{ backgroundColor: "" }} >
+      <h2 className="align-items-center text-center py-5">Top Categories</h2>
       <Slider {...settings}>
         {categories.map((cat) => (
           <div key={cat._id}>
             <div
-              className={`category-item ${
-                active === cat._id ? "active" : ""
-              }`}
+              className={`category-item ${active === cat._id ? "active" : ""
+                }`}
               onClick={() => onSelect(cat._id)}
             >
               <div className="category-img-wrapper">

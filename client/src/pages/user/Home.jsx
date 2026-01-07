@@ -13,7 +13,6 @@ import OfferBanner from "./OfferBanner";
 import Testimonials from "./Testimonials";
 import Newsletter from "./Newsletter";
 
-
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState([]);
@@ -85,68 +84,61 @@ export default function Home() {
 
       <Banner />
       <CategorySlider categories={categories} active={getParam("category")} onSelect={(id) => updateParam("category", id)} />
-
-      <div className="container mt-4">
-        <div className="row">
-          <div className="col-md-3">
-            <CategorySidebar categories={categories} selected={getParam("category")} onSelect={(id) => updateParam("category", id)} />
-            <FiltersPanel query={{ minPrice: getParam("minPrice"), maxPrice: getParam("maxPrice"), minRating: getParam("minRating"), sort: getParam("sort"), }} onChangeParam={updateParam} />
-          </div>
-
-          <div className="col-md-9">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <div>
-                <strong>Total {data.total}</strong> results</div>
-              <div>
-                {/* optional quick sort select */}
-              </div>
+      <div className="container-fluid py-5" style={{ backgroundColor: "#f2eaeaff" }} >
+        <div className="container ">
+          <div className="row" >
+            <div className="col-md-3">
+              <CategorySidebar categories={categories} selected={getParam("category")} onSelect={(id) => updateParam("category", id)} />
+              <FiltersPanel query={{ minPrice: getParam("minPrice"), maxPrice: getParam("maxPrice"), minRating: getParam("minRating"), sort: getParam("sort"), }} onChangeParam={updateParam} />
             </div>
 
-            {loading ? (
-              <LoadingPage />
-            ) : (
-              <div className="row g-3">
-                {data.products.map((p) => (
-                  <div className="col-md-4" key={p._id}>
-                    <ProductCard product={p} />
-                  </div>
-                ))}
+            <div className="col-md-9">
+              {loading ? (
+                <LoadingPage />
+              ) : (
+                <div className="row g-3">
+                  {data.products.map((p) => (
+                    <div className="col-md-4" key={p._id}>
+                      <ProductCard product={p} />
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-3">
+                <Pagination page={data.page} pages={data.pages} onPage={(p) => updateParam("page", p)} />
               </div>
-            )}
-            <div className="mt-3">
-              <Pagination page={data.page} pages={data.pages} onPage={(p) => updateParam("page", p)} />
             </div>
           </div>
         </div>
-
-        {/* Category sections (horizontal rows) */}
-        <hr className="my-4" />
-        <h4>Top Categories</h4>
-        {categories.slice(0, 6).map((cat) => (
-          <section key={cat._id} className="mb-4">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <h5 className="mb-0">{cat.name}</h5>
-              <button className="btn btn-sm btn-link" onClick={() => updateParam("category", cat._id)}>
-                View more
-              </button>
-            </div>
-            <div className="row g-3">
-              {(catProducts[cat._id] || []).map((p) => (
-                <div className="col-6 col-md-3" key={p._id}>
-                  <ProductCard product={p} />
-                </div>
-              ))}
-            </div>
-          </section>
-        ))}
-
       </div>
+      {/* Category sections (horizontal rows) */}
+      <div className="container-fluid py-5" style={{ backgroundColor: "#f9f2f2ff" }} >
+        <div className="container">
+          <hr className="my-4" />
+          <h4>Top Categories</h4>
+          {categories.slice(0, 6).map((cat) => (
+            <section key={cat._id} className="mb-4">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <h5 className="mb-0">{cat.name}</h5>
+                <button className="btn btn-sm btn-link" onClick={() => updateParam("category", cat._id)}>
+                  View more
+                </button>
+              </div>
+              <div className="row g-3">
+                {(catProducts[cat._id] || []).map((p) => (
+                  <div className="col-6 col-md-3" key={p._id}><ProductCard product={p} /></div>
+                ))}
+              </div>
+            </section>
+          ))}
 
+        </div>
+      </div>
       <WhyChooseUs />
       <OfferBanner />
       <Testimonials />
       <Newsletter />
 
-    </div>
+    </div >
   );
 }

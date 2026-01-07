@@ -5,9 +5,7 @@ import "aos/dist/aos.css";
 import { useCartStore } from "../../stores/cartStore";
 
 export default function ProductCard({ product }) {
-  const imageSrc = product.image
-    ? `http://localhost:5000${product.image}`
-    : "/placeholder.png";
+  const imageSrc = product.image ? `http://localhost:5000${product.image}`: "/placeholder.png";
 
   const { addToCart, loading } = useCartStore(); // zustand hook
   const navigate = useNavigate();
@@ -27,7 +25,7 @@ export default function ProductCard({ product }) {
     // Show confirmation dialog
     const goToCart = window.confirm(" Item added to cart. Do you want to view your cart?");
     if (goToCart) {
-      navigate("/"); 
+      navigate("/cart"); 
     }
   };
 
@@ -35,7 +33,7 @@ export default function ProductCard({ product }) {
     <div className="card h-100 shadow-lg border-0 rounded-3 product-card" data-aos="fade-up" >
       {/* Image Section */}
       <Link to={`/product/${product._id}`} className="card-img-container">
-        <img src={imageSrc} className="card-img-top product-img" alt={product.name} />
+        <img src={imageSrc} style={{height:"230px"}} className="card-img-top " alt={product.name} />
       </Link>
 
       {/* Card Body */}
