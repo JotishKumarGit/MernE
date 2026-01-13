@@ -128,30 +128,26 @@ export const getTopSellingProducts = async (req, res) => {
   try {
     const topProducts = await Order.aggregate([
       { $unwind: "$orderItems" },
-      {
-        $group: {
-          _id: "$orderItems.product",
-          totalSold: { $sum: "$orderItems.qty" }
-        }
-      },
+      { $group: { _id: "$orderItems.product", totalSold: { $sum: "$orderItems.qty" } } },
       {
         $lookup: {
           from: "products",
           localField: "_id",
           foreignField: "_id",
-          as: "productDetails"
-        }
+          as: "productDetails",
+        },
       },
       { $unwind: "$productDetails" },
       {
         $project: {
           _id: 0,
           productName: "$productDetails.name",
-          unitsSold: "$totalSold"
-        }
+          subCategory: "$productDetails.subCategory",
+          unitsSold: "$totalSold",
+        },
       },
       { $sort: { unitsSold: -1 } },
-      { $limit: 5 }
+      { $limit: 5 },
     ]);
 
     res.json(topProducts);

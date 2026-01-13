@@ -4,8 +4,8 @@ import Product from "../models/Product.js";
 // helper: make absolute URL for image
 const makeAbsoluteImageUrl = (req, imagePath) => {
   if (!imagePath) return null;
-  if (imagePath.startsWith("http")) return imagePath; // already absolute
-  const host = `${req.protocol}://${req.get("host")}`; // e.g. http://localhost:5000
+  if (imagePath.startsWith("http")) return imagePath;
+  const host = `${req.protocol}://${req.get("host")}`;
   return imagePath.startsWith("/") ? `${host}${imagePath}` : `${host}/${imagePath}`;
 };
   
@@ -23,34 +23,25 @@ export const addToCart = async (req, res) => {
       cart = new Cart({ user: userId, items: [], totalPrice: 0 });
     }
 
-    const existingItem = cart.items.find(
-      (item) => item.product.toString() === productId
-    );
+    const existingItem = cart.items.find(item => item.product.toString() === productId);
 
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
-      cart.items.push({
-        product: productId,
-        quantity,
-        price: product.price,
-      });
+      cart.items.push({ product: productId, quantity, price: product.price });
     }
 
-    cart.totalPrice = cart.items.reduce(
-      (sum, item) => sum + item.quantity * item.price,
-      0
-    );
+    cart.totalPrice = cart.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
     await cart.save();
 
-    // re-fetch populated cart as plain object and convert image paths
-    const populated = await Cart.findOne({ user: userId }).populate("items.product").lean();
-    if (populated && populated.items) {
-      populated.items.forEach((it) => {
-        if (it.product) it.product.image = makeAbsoluteImageUrl(req, it.product.image);
-      });
-    }
+    const populated = await Cart.findOne({ user: userId })
+      .populate("items.product", "name price image category subCategory")
+      .lean();
+
+    populated.items.forEach(it => {
+      if (it.product) it.product.image = makeAbsoluteImageUrl(req, it.product.image);
+    });
 
     res.json(populated || { items: [], totalPrice: 0 });
   } catch (error) {
@@ -62,10 +53,12 @@ export const addToCart = async (req, res) => {
 export const getCart = async (req, res) => {
   try {
     const userId = req.user.id;
-    const cart = await Cart.findOne({ user: userId }).populate("items.product").lean();
+    const cart = await Cart.findOne({ user: userId })
+      .populate("items.product", "name price image category subCategory")
+      .lean();
     if (!cart) return res.json({ items: [], totalPrice: 0 });
 
-    cart.items.forEach((it) => {
+    cart.items.forEach(it => {
       if (it.product) it.product.image = makeAbsoluteImageUrl(req, it.product.image);
     });
 
@@ -74,7 +67,6 @@ export const getCart = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 // Update Item Quantity
 export const updateCartItem = async (req, res) => {
   try {

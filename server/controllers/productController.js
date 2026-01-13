@@ -1,39 +1,66 @@
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
+import SubCategory from '../models/SubCategory.js';
 
 // create product
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, price, stock, category } = req.body;
+    const { name, description, price, stock, category, subCategory } = req.body;
 
-    // Validate category
+    // ✅ Validate main category
     const categoryExists = await Category.findById(category);
     if (!categoryExists) {
-      return res.status(400).json({ message: 'Invalid category ID' });
+      return res.status(400).json({ message: "Invalid category ID" });
     }
 
-    // Check if image is uploaded
+    // ✅ Validate subCategory (REQUIRED)
+    if (!subCategory) {
+      return res.status(400).json({ message: "SubCategory is required" });
+    }
+
+    const subCategoryExists = await SubCategory.findById(subCategory);
+    if (!subCategoryExists) {
+      return res.status(400).json({ message: "Invalid subCategory ID" });
+    }
+
+    // ✅ Validate stock
+    if (stock === undefined || stock === "") {
+      return res.status(400).json({ message: "Stock is required" });
+    }
+
+    // ✅ Validate image
     if (!req.file) {
-      return res.status(400).json({ message: 'Image is required' });
+      return res.status(400).json({ message: "Image is required" });
     }
 
-    // ✅ Create product with image path
+    // ✅ Create product
     const product = new Product({
-      name,description,price,stock,category,
+      name,
+      description,
+      price,
+      stock,
+      category,
+      subCategory,
       image: `/uploads/${req.file.filename}`,
       createdBy: req.user._id,
     });
 
     await product.save();
-    res.status(201).json(product);
+
+    res.status(201).json({
+      success: true,
+      message: "Product created successfully",
+      product,
+    });
+
   } catch (error) {
+    console.error("CREATE PRODUCT ERROR:", error);
     res.status(400).json({ message: error.message });
   }
 };
 
 // Get all products with search, filter, pagination, sorting
 export const getAllProducts = async (req, res) => {
-
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 9;
@@ -52,47 +79,35 @@ export const getAllProducts = async (req, res) => {
       ? { category: req.query.category }
       : {};
 
-    const minPrice = req.query.minPrice
-      ? Number(req.query.minPrice)
-      : 0;
-
-    const maxPrice = req.query.maxPrice
-      ? Number(req.query.maxPrice)
-      : Number.MAX_SAFE_INTEGER;
-
-    const ratingFilter = req.query.minRating
-      ? { averageRating: { $gte: Number(req.query.minRating) } }
-      : {};
-
-    let sort = {};
-    if (req.query.sort === "priceAsc") sort.price = 1;
-    else if (req.query.sort === "priceDesc") sort.price = -1;
-    else if (req.query.sort === "newest") sort.createdAt = -1;
-    else if (req.query.sort === "oldest") sort.createdAt = 1;
-
     const filterQuery = {
       ...keyword,
       ...categoryFilter,
-      price: { $gte: minPrice, $lte: maxPrice },
-      ...ratingFilter,
     };
 
     const totalProducts = await Product.countDocuments(filterQuery);
-    const totalPages = Math.ceil(totalProducts / limit) || 1;
 
     const products = await Product.find(filterQuery)
+      // ✅ VERY IMPORTANT POPULATE
+      .populate({
+        path: "subCategory",
+        select: "name",
+        populate: {
+          path: "category",
+          select: "name",
+        },
+      })
       .populate("createdBy", "name email")
-      .populate("category", "name")
-      .sort(sort)
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
     res.status(200).json({
       totalProducts,
       currentPage: page,
-      totalPages,
+      totalPages: Math.ceil(totalProducts / limit),
       products,
     });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -103,18 +118,32 @@ export const updateProduct = async (req, res) => {
   try {
     const updatedFields = { ...req.body };
 
-    // If a new image is uploaded
+    // ✅ If image updated
     if (req.file) {
       updatedFields.image = `/uploads/${req.file.filename}`;
     }
 
-    const product = await Product.findByIdAndUpdate(req.params.id, updatedFields, {
-      new: true,
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      updatedFields,
+      { new: true }
+    )
+      // ✅ Populate after update
+      .populate({
+        path: "subCategory",
+        populate: { path: "category" },
+      });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Product updated successfully",
+      product,
     });
 
-    if (!product) return res.status(404).json({ message: 'Product not found' });
-
-    res.status(200).json(product);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -124,13 +153,16 @@ export const updateProduct = async (req, res) => {
 export const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("createdBy", "name email")
-      .populate("category", "name description");
-    if (!product) return res.status(404).json({ message: "Product not found" });
+      .populate("category", "name slug")
+      .populate("subCategory", "name slug");
 
-    res.status(200).json(product);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -138,9 +170,16 @@ export const getProductById = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    res.status(200).json({ message: 'Product deleted successfully' });
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Product deleted successfully",
+    });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

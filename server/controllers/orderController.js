@@ -16,16 +16,8 @@ export const placeOrder = async (req, res) => {
     const userId = req.user._id;
     const { orderItems, shippingAddress } = req.body;
 
-    // ✅ ADDRESS VALIDATION
-    if (
-      !shippingAddress ||
-      !shippingAddress.fullName ||
-      !shippingAddress.phone ||
-      !shippingAddress.addressLine ||
-      !shippingAddress.city ||
-      !shippingAddress.state ||
-      !shippingAddress.pincode
-    ) {
+    if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone ||
+        !shippingAddress.addressLine || !shippingAddress.city || !shippingAddress.state || !shippingAddress.pincode) {
       return res.status(400).json({ message: "Shipping address is required" });
     }
 
@@ -43,7 +35,6 @@ export const placeOrder = async (req, res) => {
       const quantity = Number(item.qty || item.quantity || 0);
       if (quantity <= 0) throw new Error("Invalid quantity");
 
-      // ✅ ONLY CHECK STOCK
       if (product.stock < quantity) {
         throw new Error(`Not enough stock for ${product.name}`);
       }
@@ -61,7 +52,7 @@ export const placeOrder = async (req, res) => {
         {
           user: userId,
           orderItems: processedItems,
-          shippingAddress, // ✅ ADDRESS STORED HERE
+          shippingAddress,
           totalAmount,
           status: "pending",
         },
@@ -72,9 +63,14 @@ export const placeOrder = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    // Populate subCategory for frontend
+    const populatedOrder = await Order.findById(order[0]._id)
+      .populate("orderItems.product", "name price image category subCategory")
+      .populate("user", "name email");
+
     res.status(201).json({
       message: "Order placed successfully",
-      order: order[0],
+      order: populatedOrder,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -139,10 +135,10 @@ export const getMyOrders = async (req, res) => {
 
     const userId = req.user._id;
 
-    const totalOrders = await Order.countDocuments();
+    const totalOrders = await Order.countDocuments({ user: userId });
 
     const orders = await Order.find({ user: userId })
-      .populate("orderItems.product", "name price image")
+      .populate("orderItems.product", "name price image category subCategory")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -164,7 +160,7 @@ export const getMyOrders = async (req, res) => {
 ===================================================== */
 export const cancelOrder = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate("orderItems.product");
+    const order = await Order.findById(req.params.id).populate("orderItems.product", "name stock category subCategory");
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     if (["shipped", "delivered"].includes(order.status)) {
@@ -179,7 +175,7 @@ export const cancelOrder = async (req, res) => {
     for (const item of order.orderItems) {
       const product = await Product.findById(item.product._id);
       if (product) {
-        product.stock += item.qty; // qty fix
+        product.stock += item.qty;
         await product.save();
       }
     }

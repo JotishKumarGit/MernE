@@ -8,10 +8,11 @@ const Categories = () => {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [formData, setFormData] = useState({ name: "", description: "", image: null, });
+  const [formData, setFormData] = useState({ name: "", description: "", image: null, isPopular: false });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 9;
+  const [submitting, setSubmitting] = useState(false);
 
   /* ================= FETCH ================= */
   const fetchCategories = async () => {
@@ -33,24 +34,21 @@ const Categories = () => {
 
   /* ================= INPUT HANDLERS ================= */
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, type, checked, value } = e.target;
+    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
-
-  const handleImageChange = (e) => {
-    setFormData({ ...formData, image: e.target.files[0] });
-  };
+  const handleImageChange = (e) => setFormData({ ...formData, image: e.target.files[0] });
 
   /* ================= CREATE / UPDATE ================= */
   const handleSubmit = async () => {
+    if (!formData.name.trim()) return toast.error("Name is required");
+    setSubmitting(true);
     try {
       const payload = new FormData();
       payload.append("name", formData.name);
       payload.append("description", formData.description);
-
-      if (formData.image) {
-        payload.append("image", formData.image);
-      }
-      console.log(formData.image);
+      payload.append("isPopular", formData.isPopular); // <-- added
+      if (formData.image) payload.append("image", formData.image);
 
       if (editingCategory) {
         await api.put(`/categories/${editingCategory._id}`, payload, {
@@ -68,6 +66,8 @@ const Categories = () => {
       handleClose();
     } catch (err) {
       toast.error(err.response?.data?.message || "Something went wrong");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -77,7 +77,8 @@ const Categories = () => {
       try {
         await api.delete(`/categories/${id}`);
         toast.success("Category deleted");
-        fetchCategories();
+        if (categories.length === 1 && page > 1) setPage(page - 1);
+        else fetchCategories();
       } catch {
         toast.error("Delete failed");
       }
@@ -91,13 +92,14 @@ const Categories = () => {
       name: category?.name || "",
       description: category?.description || "",
       image: null,
+      isPopular: category?.isPopular || false, // <-- added
     });
     setShowModal(true);
   };
 
   const handleClose = () => {
     setEditingCategory(null);
-    setFormData({ name: "", description: "", image: null });
+    setFormData({ name: "", description: "", image: null, isPopular: false });
     setShowModal(false);
   };
 
@@ -111,9 +113,7 @@ const Categories = () => {
           </div>
 
           {loading ? (
-            <div className="text-center">
-              <Spinner animation="border" />
-            </div>
+            <div className="text-center"><Spinner animation="border" /></div>
           ) : (
             <Table bordered hover responsive>
               <thead className="table-dark">
@@ -122,30 +122,31 @@ const Categories = () => {
                   <th>Image</th>
                   <th>Name</th>
                   <th>Description</th>
+                  <th>Popular</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {categories.length ? (
-                  categories.map((cat, index) => (
-                    <tr key={cat._id}>
-                      <td>{(page - 1) * limit + index + 1}</td>
-                      <td>
-                        <Image src={`${import.meta.env.VITE_API_URL}${cat.image}`} roundedCircle width={50} height={50} />
-                      </td>
-                      <td>{cat.name}</td>
-                      <td>{cat.description}</td>
-                      <td>
-                        <Button size="sm" variant="warning" className="me-2" onClick={() => handleShow(cat)}>
-                          Edit
-                        </Button>
-                        <Button size="sm" variant="danger" onClick={() => handleDelete(cat._id)}>Delete</Button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
+                {categories.length ? categories.map((cat, idx) => (
+                  <tr key={cat._id}>
+                    <td>{(page - 1) * limit + idx + 1}</td>
+                    <td>
+                      <Image
+                        src={cat.image ? `${import.meta.env.VITE_API_URL}${cat.image}` : "https://via.placeholder.com/50"}
+                        roundedCircle width={50} height={50}
+                      />
+                    </td>
+                    <td>{cat.name}</td>
+                    <td>{cat.description}</td>
+                    <td>{cat.isPopular ? "Yes" : "No"}</td>
+                    <td>
+                      <Button size="sm" variant="warning" className="me-2" onClick={() => handleShow(cat)}>Edit</Button>
+                      <Button size="sm" variant="danger" onClick={() => handleDelete(cat._id)}>Delete</Button>
+                    </td>
+                  </tr>
+                )) : (
                   <tr>
-                    <td colSpan="5" className="text-center"> No categories found</td>
+                    <td colSpan="6" className="text-center">No categories found</td>
                   </tr>
                 )}
               </tbody>
@@ -154,18 +155,9 @@ const Categories = () => {
 
           {/* PAGINATION */}
           <div className="d-flex justify-content-center">
-            <Button disabled={page === 1} onClick={() => setPage(page - 1)}>
-              Prev
-            </Button>
-            <span className="mx-3 mt-2">
-              Page {page} of {totalPages}
-            </span>
-            <Button
-              disabled={page === totalPages}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </Button>
+            <Button disabled={page === 1} onClick={() => setPage(page - 1)}>Prev</Button>
+            <span className="mx-3 mt-2">Page {page} of {totalPages}</span>
+            <Button disabled={page === totalPages} onClick={() => setPage(page + 1)}>Next</Button>
           </div>
         </Card.Body>
       </Card>
@@ -173,29 +165,26 @@ const Categories = () => {
       {/* MODAL */}
       <Modal show={showModal} onHide={handleClose} centered>
         <Modal.Header closeButton>
-          <Modal.Title>
-            {editingCategory ? "Edit Category" : "Add Category"}
-          </Modal.Title>
+          <Modal.Title>{editingCategory ? "Edit Category" : "Add Category"}</Modal.Title>
         </Modal.Header>
-
         <Modal.Body>
           <Form>
             <Form.Group className="mb-3">
               <Form.Label>Name</Form.Label>
-              <Form.Control
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-              />
+              <Form.Control name="name" value={formData.name} onChange={handleChange} />
             </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                name="description"
-                value={formData.description}
+              <Form.Control as="textarea" rows={3} name="description" value={formData.description} onChange={handleChange} />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Check
+                type="checkbox"
+                label="Popular Category"
+                name="isPopular"
+                checked={formData.isPopular}
                 onChange={handleChange}
               />
             </Form.Group>
@@ -203,21 +192,20 @@ const Categories = () => {
             <Form.Group>
               <Form.Label>Category Image</Form.Label>
               <Form.Control type="file" onChange={handleImageChange} />
-              {editingCategory && (
-                <small className="text-muted">
-                  Leave empty to keep old image
-                </small>
+              {editingCategory && editingCategory.image && (
+                <div className="mt-2">
+                  <small>Current Image:</small>
+                  <br />
+                  <Image src={`${import.meta.env.VITE_API_URL}${editingCategory.image}`} width={80} height={80} rounded />
+                </div>
               )}
             </Form.Group>
           </Form>
         </Modal.Body>
-
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            {editingCategory ? "Update" : "Save"}
+          <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? "Saving..." : editingCategory ? "Update" : "Save"}
           </Button>
         </Modal.Footer>
       </Modal>

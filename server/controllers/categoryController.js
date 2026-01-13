@@ -1,38 +1,37 @@
-// controllers/categoryController.js
-import Category from '../models/Category.js';
+import Category from "../models/Category.js";
+import SubCategory from "../models/SubCategory.js";
+import Product from "../models/Product.js";
 
-// Create category (Admin only)
+/* ================= CREATE CATEGORY ================= */
 export const createCategory = async (req, res) => {
   try {
-    const { name, description, parent, isPopular } = req.body;
+    const { name, description, isPopular } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: "Category image is required" });
     }
 
-    const category = new Category({
+    const category = await Category.create({
       name,
       description,
-      image: `/uploads/${req.file.filename}`, // local image
-      parent: parent || null,          // ✅ parent category
-      isPopular: isPopular || false,   // ✅ popular flag
+      image: `/uploads/${req.file.filename}`,
+      isPopular: Boolean(isPopular),
     });
 
-    await category.save();
     res.status(201).json(category);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// Get all categories (Public)
+/* ================= GET ALL CATEGORIES (PAGINATED) ================= */
 export const getAllCategories = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const totalCategories = await Category.countDocuments();
+    const total = await Category.countDocuments();
 
     const categories = await Category.find()
       .sort({ createdAt: -1 })
@@ -41,19 +40,19 @@ export const getAllCategories = async (req, res) => {
 
     res.status(200).json({
       categories,
-      currentPage: page,
-      totalPages: Math.ceil(totalCategories / limit),
-      totalCategories,
+      page,
+      totalPages: Math.ceil(total / limit),
+      total,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Get single category
+/* ================= GET SINGLE CATEGORY ================= */
 export const getCategoryById = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id).populate("parent");
+    const category = await Category.findById(req.params.id);
 
     if (!category)
       return res.status(404).json({ message: "Category not found" });
@@ -64,14 +63,13 @@ export const getCategoryById = async (req, res) => {
   }
 };
 
-// Update category (Admin only)
+/* ================= UPDATE CATEGORY ================= */
 export const updateCategory = async (req, res) => {
   try {
     const updateData = {
       name: req.body.name,
       description: req.body.description,
-      parent: req.body.parent || null,     // ✅ update parent
-      isPopular: req.body.isPopular,       // ✅ update popular
+      isPopular: req.body.isPopular,
     };
 
     if (req.file) {
@@ -93,84 +91,72 @@ export const updateCategory = async (req, res) => {
   }
 };
 
-// Delete category (Admin only)
+/* ================= DELETE CATEGORY ================= */
 export const deleteCategory = async (req, res) => {
   try {
     const category = await Category.findByIdAndDelete(req.params.id);
-    if (!category) return res.status(404).json({ message: 'Category not found' });
 
-    res.status(200).json({ message: 'Category deleted successfully' });
+    if (!category)
+      return res.status(404).json({ message: "Category not found" });
+
+    res.status(200).json({ message: "Category deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Get categories with their products
-export const getCategoriesWithProducts = async (req, res) => {
+/* ================= POPULAR CATEGORIES (FOR MEGA MENU) ================= */
+export const getPopularCategories = async (req, res) => {
   try {
-    const categories = await Category.find().sort({ name: 1 });
+    const categories = await Category.find({ isPopular: true })
+      .sort({ name: 1 })
+      .select("name image");
 
-    // Har category ke products fetch karo
-    const categoriesWithProducts = await Promise.all(
-      categories.map(async (cat) => {
-        const products = await Product.find({ category: cat._id }).limit(6);
-        return { ...cat.toObject(), products };
-      })
-    );
-
-    res.status(200).json(categoriesWithProducts);
+    res.status(200).json(categories);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Mega dropdown API
-export const getMegaMenuCategories = async (req, res) => {
+// Get mega menu
+export const getMegaMenu = async (req, res) => {
   try {
-    // 1️⃣ Get popular main categories
-    const parentCategories = await Category.find({
-      isPopular: true,
-      parent: null,
-    }).sort({ name: 1 });
+    const categories = await Category.find({ isPopular: true })
+      .sort({ order: 1 })
+      .select("name slug");
 
-    const megaMenuData = await Promise.all(
-      parentCategories.map(async (parent) => {
+    const menu = [];
 
-        // 2️⃣ Get sub categories
-        const subCategories = await Category.find({
-          parent: parent._id,
-        }).sort({ name: 1 });
+    for (let cat of categories) {
+      const subCategories = await SubCategory.find({ category: cat._id })
+        .select("name slug");
 
-        // 3️⃣ Attach products to each sub category
-        const subCategoriesWithProducts = await Promise.all(
-          subCategories.map(async (sub) => {
-            const products = await Product.find({
-              subCategory: sub._id,
-            })
-              .limit(6)
-              .select("name price image");
+      const subData = [];
 
-            return {
-              _id: sub._id,
-              name: sub.name,
-              products,
-            };
-          })
-        );
+      for (let sub of subCategories) {
+        const products = await Product.find({ subCategory: sub._id })
+          .select("name price image")
+          .limit(4);
 
-        return {
-          _id: parent._id,
-          name: parent.name,
-          image: parent.image,
-          subCategories: subCategoriesWithProducts,
-        };
-      })
-    );
+        subData.push({
+          _id: sub._id,
+          name: sub.name,
+          slug: sub.slug,
+          products,
+        });
+      }
 
-    res.status(200).json(megaMenuData);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+      menu.push({
+        _id: cat._id,
+        name: cat.name,
+        slug: cat.slug,
+        subCategories: subData,
+      });
+    }
+
+    res.json(menu);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
-
 

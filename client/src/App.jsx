@@ -21,6 +21,7 @@ import Products from "./pages/admin/Products";
 import Orders from "./pages/admin/Orders";
 import Users from "./pages/admin/Users";
 import Categories from './pages/admin/Categories';
+import SubCategories from './pages/admin/SubCategories';
 import Reports from './pages/admin/Reports';
 import Settings from './pages/admin/Settings';
 import AdminAnalytics from './components/admin/AdminAnalytics';
@@ -75,6 +76,7 @@ function App() {
         <Route path="/admin/settings" element={<ProtectedRoute adminOnly><AdminLayout><Settings /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/reports" element={<ProtectedRoute adminOnly><AdminLayout><Reports /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/categories" element={<ProtectedRoute adminOnly><AdminLayout><Categories /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/sub-categories" element={<ProtectedRoute adminOnly><AdminLayout><SubCategories /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute adminOnly><AdminLayout>< AdminAnalytics /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/audit-logs" element={<ProtectedRoute adminOnly><AdminLayout>< AuditLogs /></AdminLayout></ProtectedRoute>} />
 

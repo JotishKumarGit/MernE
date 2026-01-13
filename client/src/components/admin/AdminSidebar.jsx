@@ -1,6 +1,6 @@
 // src/components/admin/AdminSidebar.jsx
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, ClipboardList , Package, ShoppingCart, Users, List, LogOut, Settings, BarChart } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Package, ShoppingCart, Users, List, Layers, LogOut, Settings, BarChart } from "lucide-react";
 import { useAuthStore } from '../../stores/authStore';
 
 export default function AdminSidebar({ isOpen, setIsOpen }) {
@@ -12,6 +12,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }) {
     { to: "/admin/dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
     { to: "/admin/products", label: "Products", icon: <Package size={18} /> },
     { to: "/admin/categories", label: "Categories", icon: <List size={18} /> },
+    { to: "/admin/sub-categories", label: "Sub Categories", icon: <Layers size={18} /> },
     { to: "/admin/orders", label: "Orders", icon: <ShoppingCart size={18} /> },
     { to: "/admin/users", label: "Users", icon: <Users size={18} /> },
     { to: "/admin/reports", label: "Reports", icon: <BarChart size={18} /> },

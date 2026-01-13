@@ -47,17 +47,13 @@ export const createRazorpayOrder = async (req, res) => {
   }
 };
 
+
 /* =====================================================
    VERIFY PAYMENT
 ===================================================== */
 export const verifyPayment = async (req, res) => {
   try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      orderId,
-    } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
 
     const generatedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -69,47 +65,30 @@ export const verifyPayment = async (req, res) => {
     }
 
     const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
-    // prevent double payment
-    if (order.status === "paid") {
-      return res.status(200).json({ message: "Order already paid", order });
-    }
+    if (order.status === "paid") return res.status(200).json({ message: "Order already paid", order });
 
-    // 🔥 FIXED: quantity field
     for (const item of order.orderItems) {
       const product = await Product.findById(item.product);
       if (product) {
-        product.stock = Math.max(
-          0,
-          product.stock - item.qty
-        );
+        product.stock = Math.max(0, product.stock - item.qty);
         await product.save();
       }
     }
 
     order.status = "paid";
-    order.paymentInfo = {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      paidAt: new Date(),
-    };
-
+    order.paymentInfo = { razorpay_order_id, razorpay_payment_id, razorpay_signature, paidAt: new Date() };
     await order.save();
 
-    // clear cart
-    await Cart.findOneAndUpdate(
-      { user: order.user },
-      { items: [], totalPrice: 0 }
-    );
+    await Cart.findOneAndUpdate({ user: order.user }, { items: [], totalPrice: 0 });
 
-    res.status(200).json({
-      message: "Payment verified & order confirmed",
-      order,
-    });
+    // Populate subCategory for frontend
+    const populatedOrder = await Order.findById(order._id)
+      .populate("orderItems.product", "name price image category subCategory")
+      .populate("user", "name email");
+
+    res.status(200).json({ message: "Payment verified & order confirmed", order: populatedOrder });
   } catch (error) {
     console.error("Verify Payment Error:", error);
     res.status(500).json({ message: error.message });
