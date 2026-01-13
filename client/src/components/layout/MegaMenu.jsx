@@ -21,59 +21,60 @@ const MegaMenu = () => {
     }
   };
 
+  const isDesktop = window.innerWidth > 1024;
+
   return (
     <div className="mega-header">
       <ul className="menu-list">
         {menu.map((cat) => (
           <li
             key={cat._id}
-            onMouseEnter={() =>
-              window.innerWidth > 1024 && setActiveCat(cat._id)
-            }
+            onMouseEnter={() => isDesktop && setActiveCat(cat._id)}
+            onMouseLeave={() => isDesktop && setActiveCat(null)}
           >
-
+            {/* CATEGORY NAME */}
             <span
               onClick={() =>
+                !isDesktop &&
                 setActiveCat(activeCat === cat._id ? null : cat._id)
               }
             >
               {cat.name}
             </span>
 
-
+            {/* MEGA MENU */}
             {activeCat === cat._id && (
-              <div
-                className="mega-dropdown"
-                onMouseLeave={() => setActiveCat(null)}
-              >
-                {cat.subCategories.map((sub) => (
-                  <div className="mega-column" key={sub._id}>
-                    <h6
-                      onClick={() =>
-                        navigate(`/category/${cat.slug}/${sub.slug}`)
-                      }
-                    >
-                      {sub.name}
-                    </h6>
-
-                    {sub.products.map((p) => (
-                      <div
-                        key={p._id}
-                        className="mega-product"
-                        onClick={() => navigate(`/product/${p._id}`)}
+              <div className="mega-overlay">
+                <div className="mega-panel">
+                  {cat.subCategories.map((sub) => (
+                    <div className="mega-column" key={sub._id}>
+                      <h6
+                        onClick={() =>
+                          navigate(`/category/${cat.slug}/${sub.slug}`)
+                        }
                       >
-                        <img
-                          src={`${import.meta.env.VITE_API_URL}${p.image}`}
-                          alt={p.name}
-                        />
-                        <div>
-                          <p>{p.name}</p>
-                          <span>₹{p.price}</span>
+                        {sub.name}
+                      </h6>
+
+                      {sub.products.map((p) => (
+                        <div
+                          key={p._id}
+                          className="mega-product"
+                          onClick={() => navigate(`/product/${p._id}`)}
+                        >
+                          <img
+                            src={`${import.meta.env.VITE_API_URL}${p.image}`}
+                            alt={p.name}
+                          />
+                          <div>
+                            <p>{p.name}</p>
+                            <span>₹{p.price}</span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </li>
