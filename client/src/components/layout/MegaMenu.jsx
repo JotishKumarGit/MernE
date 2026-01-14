@@ -6,7 +6,10 @@ import "./MegaMenu.css";
 const MegaMenu = () => {
   const [menu, setMenu] = useState([]);
   const [activeCat, setActiveCat] = useState(null);
+  const [activeSub, setActiveSub] = useState(null);
   const navigate = useNavigate();
+
+  const isDesktop = window.innerWidth > 1024;
 
   useEffect(() => {
     fetchMegaMenu();
@@ -17,11 +20,9 @@ const MegaMenu = () => {
       const { data } = await api.get("/categories/mega-menu");
       setMenu(data);
     } catch (err) {
-      console.error("Mega menu error", err);
+      console.error(err);
     }
   };
-
-  const isDesktop = window.innerWidth > 1024;
 
   return (
     <div className="mega-header">
@@ -29,17 +30,20 @@ const MegaMenu = () => {
         {menu.map((cat) => (
           <li
             key={cat._id}
+            className="menu-item"
             onMouseEnter={() => isDesktop && setActiveCat(cat._id)}
             onMouseLeave={() => isDesktop && setActiveCat(null)}
           >
-            {/* CATEGORY NAME */}
+            {/* CATEGORY */}
             <span
+              className="menu-title"
               onClick={() =>
                 !isDesktop &&
                 setActiveCat(activeCat === cat._id ? null : cat._id)
               }
             >
               {cat.name}
+              {!isDesktop && <span className="arrow">{activeCat === cat._id ? "▾" : "▸"}</span>}
             </span>
 
             {/* MEGA MENU */}
@@ -48,30 +52,51 @@ const MegaMenu = () => {
                 <div className="mega-panel">
                   {cat.subCategories.map((sub) => (
                     <div className="mega-column" key={sub._id}>
-                      <h6
+                      {/* SUB CATEGORY */}
+                      <div
+                        className="sub-head"
                         onClick={() =>
-                          navigate(`/category/${cat.slug}/${sub.slug}`)
+                          !isDesktop &&
+                          setActiveSub(activeSub === sub._id ? null : sub._id)
                         }
                       >
-                        {sub.name}
-                      </h6>
-
-                      {sub.products.map((p) => (
-                        <div
-                          key={p._id}
-                          className="mega-product"
-                          onClick={() => navigate(`/product/${p._id}`)}
+                        <h6
+                          onClick={() =>
+                            isDesktop &&
+                            navigate(`/category/${cat.slug}/${sub.slug}`)
+                          }
                         >
-                          <img
-                            src={`${import.meta.env.VITE_API_URL}${p.image}`}
-                            alt={p.name}
-                          />
-                          <div>
-                            <p>{p.name}</p>
-                            <span>₹{p.price}</span>
-                          </div>
+                          {sub.name}
+                        </h6>
+
+                        {!isDesktop && (
+                          <span className="arrow">
+                            {activeSub === sub._id ? "▾" : "▸"}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* PRODUCTS */}
+                      {(isDesktop || activeSub === sub._id) && (
+                        <div className="products-wrap">
+                          {sub.products.map((p) => (
+                            <div
+                              key={p._id}
+                              className="mega-product"
+                              onClick={() => navigate(`/product/${p._id}`)}
+                            >
+                              <img
+                                src={`${import.meta.env.VITE_API_URL}${p.image}`}
+                                alt={p.name}
+                              />
+                              <div>
+                                <p>{p.name}</p>
+                                <span>₹{p.price}</span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
                   ))}
                 </div>
