@@ -20,7 +20,7 @@ const MegaMenu = () => {
       const { data } = await api.get("/categories/mega-menu");
       setMenu(data);
     } catch (err) {
-      console.error(err);
+      console.error("Mega menu error", err);
     }
   };
 
@@ -34,41 +34,58 @@ const MegaMenu = () => {
             onMouseEnter={() => isDesktop && setActiveCat(cat._id)}
             onMouseLeave={() => isDesktop && setActiveCat(null)}
           >
-            {/* CATEGORY */}
-            <span
+            {/* ================= CATEGORY ================= */}
+            <div
               className="menu-title"
-              onClick={() =>
-                !isDesktop &&
-                setActiveCat(activeCat === cat._id ? null : cat._id)
-              }
+              onClick={() => {
+                if (!isDesktop) {
+                  setActiveCat(activeCat === cat._id ? null : cat._id);
+                  setActiveSub(null); // reset sub on category change
+                }
+              }}
             >
               {cat.name}
-              {!isDesktop && <span className="arrow">{activeCat === cat._id ? "▾" : "▸"}</span>}
-            </span>
 
-            {/* MEGA MENU */}
+              {/* MOBILE ARROW */}
+              {!isDesktop && (
+                <span className="arrow">
+                  {activeCat === cat._id ? "▾" : ">"}
+                </span>
+              )}
+            </div>
+
+            {/* ================= MEGA MENU ================= */}
             {activeCat === cat._id && (
               <div className="mega-overlay">
                 <div className="mega-panel">
                   {cat.subCategories.map((sub) => (
                     <div className="mega-column" key={sub._id}>
-                      {/* SUB CATEGORY */}
+                      {/* ============== SUB CATEGORY ============== */}
                       <div
                         className="sub-head"
-                        onClick={() =>
-                          !isDesktop &&
-                          setActiveSub(activeSub === sub._id ? null : sub._id)
-                        }
+                        onClick={() => {
+                          if (!isDesktop) {
+                            setActiveSub(
+                              activeSub === sub._id ? null : sub._id
+                            );
+                          }
+                        }}
                       >
                         <h6
-                          onClick={() =>
-                            isDesktop &&
-                            navigate(`/category/${cat.slug}/${sub.slug}`)
-                          }
+                          onClick={(e) => {
+                            if (isDesktop) {
+                              navigate(
+                                `/category/${cat.slug}/${sub.slug}`
+                              );
+                            } else {
+                              e.stopPropagation(); 
+                            }
+                          }}
                         >
                           {sub.name}
                         </h6>
 
+                        {/* MOBILE ARROW */}
                         {!isDesktop && (
                           <span className="arrow">
                             {activeSub === sub._id ? "▾" : "▸"}
@@ -76,21 +93,20 @@ const MegaMenu = () => {
                         )}
                       </div>
 
-                      {/* PRODUCTS */}
+                      {/* ================= PRODUCTS ================= */}
                       {(isDesktop || activeSub === sub._id) && (
                         <div className="products-wrap">
                           {sub.products.map((p) => (
                             <div
                               key={p._id}
                               className="mega-product"
-                              onClick={() => navigate(`/product/${p._id}`)}
+                              onClick={() =>
+                                navigate(`/product/${p._id}`)
+                              }
                             >
-                              <img
-                                src={`${import.meta.env.VITE_API_URL}${p.image}`}
-                                alt={p.name}
-                              />
+                              <img src={`${import.meta.env.VITE_API_URL}${p.image}`} alt={p.name} />
                               <div>
-                                <p>{p.name}</p>
+                                <p >{p.name}</p>
                                 <span>₹{p.price}</span>
                               </div>
                             </div>
