@@ -1,16 +1,7 @@
 import React, { useEffect, useState } from "react";
-import Pagination from "react-bootstrap/Pagination"; // update products controlller ko fix karna h 
+import Pagination from "react-bootstrap/Pagination";
 
-import {
-  Modal,
-  Button,
-  Table,  
-  Form,
-  Card,
-  Row,
-  Col,
-  Spinner,
-} from "react-bootstrap";
+import { Modal, Button, Table, Form, Card, Row, Col, Spinner } from "react-bootstrap";
 import api from "../../api/apiClient";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -41,11 +32,11 @@ const Products = () => {
     subCategory: "",
     image: null,
   });
-const handlePageChange = (pageNumber) => {
-  if (pageNumber >= 1 && pageNumber <= totalPages) {
-    setPage(pageNumber);
-  }
-};
+  const handlePageChange = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setPage(pageNumber);
+    }
+  };
 
   // ================= FETCH PRODUCTS =================
   const fetchProducts = async () => {
@@ -220,6 +211,7 @@ const handlePageChange = (pageNumber) => {
                   <th>Name</th>
                   <th>Category</th>
                   <th>Sub Category</th>
+                  <th>Description</th>
                   <th>Price</th>
                   <th>Stock</th>
                   <th>Action</th>
@@ -229,28 +221,16 @@ const handlePageChange = (pageNumber) => {
                 {products.map((p, i) => (
                   <tr key={p._id}>
                     <td>{(page - 1) * 8 + i + 1}</td>
-                    <td>
-                      <img
-                        src={`${import.meta.env.VITE_API_URL}${p.image}`}
-                        width="50"
-                      />
-                    </td>
+                    <td><img src={`${import.meta.env.VITE_API_URL}${p.image}`} width="50" /></td>
                     <td>{p.name}</td>
                     <td>{p.subCategory?.category?.name}</td>
                     <td>{p.subCategory?.name}</td>
+                    <td><div style={{ maxWidth: "250px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textOverflow: "ellipsis" }} title={p.description}>{p.description}</div></td>
                     <td>₹{p.price}</td>
                     <td>{p.stock}</td>
                     <td>
-                      <Button size="sm" onClick={() => handleShow(p)}>
-                        Edit
-                      </Button>{" "}
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        onClick={() => handleDelete(p._id)}
-                      >
-                        Delete
-                      </Button>
+                      <Button size="sm" onClick={() => handleShow(p)} className="me-2"> Edit</Button>
+                      <Button size="sm" variant="danger" onClick={() => handleDelete(p._id)}> Delete </Button>
                     </td>
                   </tr>
                 ))}
@@ -259,32 +239,32 @@ const handlePageChange = (pageNumber) => {
           )}
         </Card.Body>
       </Card>
-{/* PAGINATION */}
-{totalPages > 1 && (
-  <div className="d-flex justify-content-center mt-3">
-    <Pagination>
-      <Pagination.Prev
-        disabled={page === 1}
-        onClick={() => handlePageChange(page - 1)}
-      />
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div className="d-flex justify-content-center mt-3">
+          <Pagination>
+            <Pagination.Prev
+              disabled={page === 1}
+              onClick={() => handlePageChange(page - 1)}
+            />
 
-      {[...Array(totalPages)].map((_, index) => (
-        <Pagination.Item
-          key={index + 1}
-          active={page === index + 1}
-          onClick={() => handlePageChange(index + 1)}
-        >
-          {index + 1}
-        </Pagination.Item>
-      ))}
+            {[...Array(totalPages)].map((_, index) => (
+              <Pagination.Item
+                key={index + 1}
+                active={page === index + 1}
+                onClick={() => handlePageChange(index + 1)}
+              >
+                {index + 1}
+              </Pagination.Item>
+            ))}
 
-      <Pagination.Next
-        disabled={page === totalPages}
-        onClick={() => handlePageChange(page + 1)}
-      />
-    </Pagination>
-  </div>
-)}
+            <Pagination.Next
+              disabled={page === totalPages}
+              onClick={() => handlePageChange(page + 1)}
+            />
+          </Pagination>
+        </div>
+      )}
 
       {/* MODAL */}
       <Modal show={showModal} onHide={handleClose} centered size="lg">

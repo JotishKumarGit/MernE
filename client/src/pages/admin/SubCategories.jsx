@@ -129,13 +129,15 @@ const SubCategories = () => {
               <tbody>
                 {subCategories.length ? subCategories.map((sub, idx) => (
                   <tr key={sub._id}>
-                    <td>{(page-1)*limit + idx + 1}</td>
+                    <td>{(page - 1) * limit + idx + 1}</td>
                     <td>
                       <Image src={`${import.meta.env.VITE_API_URL}${sub.image}`} roundedCircle width={50} height={50} />
                     </td>
                     <td>{sub.name}</td>
                     <td>{sub.category?.name}</td>
-                    <td>{sub.description}</td>
+                    {/* <td>{sub.description}</td> */}
+                    <td>
+                      <div style={{ maxWidth: "250px", display: "-webkit-box", WebkitLineClamp: 2,   WebkitBoxOrient: "vertical", overflow: "hidden", textOverflow: "ellipsis"}}title={sub.description}>{sub.description}</div></td>
                     <td>
                       <Button size="sm" variant="warning" className="me-2" onClick={() => handleShow(sub)}>Edit</Button>
                       <Button size="sm" variant="danger" onClick={() => handleDelete(sub._id)}>Delete</Button>
@@ -150,9 +152,9 @@ const SubCategories = () => {
 
           {/* Pagination */}
           <div className="d-flex justify-content-center my-2">
-            <Button disabled={page===1} onClick={()=>setPage(page-1)}>Prev</Button>
+            <Button disabled={page === 1} onClick={() => setPage(page - 1)}>Prev</Button>
             <span className="mx-3 mt-2">Page {page} of {totalPages}</span>
-            <Button disabled={page===totalPages} onClick={()=>setPage(page+1)}>Next</Button>
+            <Button disabled={page === totalPages} onClick={() => setPage(page + 1)}>Next</Button>
           </div>
         </Card.Body>
       </Card>

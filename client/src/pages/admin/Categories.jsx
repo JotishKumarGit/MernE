@@ -47,7 +47,7 @@ const Categories = () => {
       const payload = new FormData();
       payload.append("name", formData.name);
       payload.append("description", formData.description);
-      payload.append("isPopular", formData.isPopular); // <-- added
+      payload.append("isPopular", formData.isPopular);
       if (formData.image) payload.append("image", formData.image);
 
       if (editingCategory) {
@@ -61,7 +61,6 @@ const Categories = () => {
         });
         toast.success("Category created successfully");
       }
-
       fetchCategories();
       handleClose();
     } catch (err) {
@@ -126,18 +125,15 @@ const Categories = () => {
                   <th>Action</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="align-middle">
                 {categories.length ? categories.map((cat, idx) => (
                   <tr key={cat._id}>
                     <td>{(page - 1) * limit + idx + 1}</td>
                     <td>
-                      <Image
-                        src={cat.image ? `${import.meta.env.VITE_API_URL}${cat.image}` : "https://via.placeholder.com/50"}
-                        roundedCircle width={50} height={50}
-                      />
+                      <Image src={cat.image ? `${import.meta.env.VITE_API_URL}${cat.image}` : "https://via.placeholder.com/50"} roundedCircle width={50} height={50} />
                     </td>
                     <td>{cat.name}</td>
-                    <td>{cat.description}</td>
+                    <td> <div style={{ maxWidth: "300px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textOverflow: "ellipsis" }} title={cat.description}>{cat.description}</div></td>
                     <td>{cat.isPopular ? "Yes" : "No"}</td>
                     <td>
                       <Button size="sm" variant="warning" className="me-2" onClick={() => handleShow(cat)}>Edit</Button>
