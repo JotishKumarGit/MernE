@@ -1,12 +1,51 @@
-/* ================= HEADER ================= */
+/* =====================================================
+   THEME VARIABLES (LIGHT / DARK)
+===================================================== */
+
+.mega-header.light {
+  --bg: #ffffff;
+  --text: #111827;
+  --border: #e5e7eb;
+  --panel: #ffffff;
+  --hover: #f5f7fa;
+}
+
+.mega-header.dark {
+  --bg: #020617;
+  --text: #e5e7eb;
+  --border: #1f2937;
+  --panel: #020617;
+  --hover: #1e293b;
+}
+
+/* =====================================================
+   HEADER
+===================================================== */
+
 .mega-header {
   width: 100%;
-  background: #fff;
+  /* background: var(--bg); */
+  color: var(--text);
   position: relative;
   z-index: 1000;
 }
 
-/* ================= TOP MENU ================= */
+/* =====================================================
+   HAMBURGER (MOBILE)
+===================================================== */
+
+.hamburger {
+  display: none;
+  font-size: 26px;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+/* =====================================================
+   TOP MENU
+===================================================== */
+
 .menu-list {
   display: flex;
   justify-content: center;
@@ -16,49 +55,129 @@
   margin: 0;
 }
 
+.menu-list.open {
+  display: flex;
+}
+
 .menu-item {
   position: relative;
   font-weight: 600;
 }
 
-.menu-title {
-  cursor: pointer;
+/* =====================================================
+   CATEGORY TITLE
+===================================================== */
+
+.menu-title,
+.sub-head {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 12px;
+
+  width: 100%;
+  padding: 14px 16px;
+
+  box-sizing: border-box;
 }
 
-/* ================= OVERLAY ================= */
+.menu-title span:first-child,
+.sub-head h6 {
+  flex: 1;
+  min-width: 0;
+font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =====================================================
+   ARROW ICON
+===================================================== */
+.arrow {
+  flex-shrink: 0;
+  width: 40px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* =====================================================
+   MEGA OVERLAY
+===================================================== */
+
 .mega-overlay {
   position: fixed;
   top: 90px;
   left: 0;
   width: 100vw;
-  max-height: calc(100vh - 90px);
+  height: calc(100vh - 90px); 
   background: transparent;
-  overflow-y: auto;
   z-index: 999;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
-/* ================= CENTER PANEL ================= */
+
+/* =====================================================
+   MEGA PANEL (CENTER)
+===================================================== */
+
 .mega-panel {
   max-width: 1200px;
-  margin: auto;
-  background: #fff;
-  padding: 35px 40px;
+  width: 100%;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;    
+
+  background: var(--panel);
+  padding: 30px;
+
   display: flex;
   flex-wrap: wrap;
-  gap: 40px;
+  gap: 30px;
+
   border-radius: 16px;
   box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+
+  scrollbar-width: thin;
 }
 
-/* ================= COLUMN ================= */
+.mega-panel::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 6px;
+}
+
+
+
+/* =====================================================
+   BACK BUTTON (MOBILE)
+===================================================== */
+
+.back-btn {
+  display: none;
+  border: none;
+  background: none;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+/* =====================================================
+   COLUMN
+===================================================== */
+
 .mega-column {
   min-width: 220px;
 }
 
-/* ================= SUB CATEGORY ================= */
+/* =====================================================
+   SUB CATEGORY
+===================================================== */
+
 .sub-head {
   display: flex;
   justify-content: space-between;
@@ -69,16 +188,16 @@
 .sub-head h6 {
   margin: 0;
   font-weight: 700;
-  color: #0d6efd;
+  color: var(--text);
 }
 
-.sub-head h6:hover {
-  color: #000;
-}
+/* =====================================================
+   PRODUCTS
+===================================================== */
 
-/* ================= PRODUCTS ================= */
 .products-wrap {
   margin-top: 8px;
+  overflow: visible; /* 🔥 FIX: show all products */
 }
 
 .mega-product {
@@ -92,68 +211,159 @@
 }
 
 .mega-product:hover {
-  background: #f5f7fa;
+  background: var(--hover);
 }
 
 .mega-product img {
-  width: 48px;
-  height: 48px;
-  object-fit: cover;
+  width: 45px;
+  height: 45px;
   border-radius: 8px;
+  object-fit: cover;
 }
 
 .mega-product p {
   margin: 0;
   font-size: 14px;
-  color : #333;
   font-weight: 500;
+  color: var(--text);
 }
 
 .mega-product span {
   font-size: 13px;
-  color: #28a745;
+  color: #22c55e;
   font-weight: 600;
 }
 
-/* ================= ARROW ================= */
-.arrow {
-  font-size: 22px;
+/* =====================================================
+   SLIDE ANIMATION
+===================================================== */
+
+.slide-down {
+  animation: slideDown 0.35s ease;
 }
 
-/* ================= MOBILE ================= */
+.slide-inner {
+  animation: slideInner 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInner {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px; /* 🔥 unlimited feel */
+  }
+}
+
+/* =====================================================
+   MOBILE VIEW
+===================================================== */
+
 @media (max-width: 1024px) {
 
+  .hamburger {
+    display: block;
+  }
   .menu-list {
+    display: none;
     flex-direction: column;
-    padding: 0px 0px;
-    gap: 0;
+    padding: 0;
   }
 
   .menu-item {
-    border-bottom: 1px solid #eee;
-    padding: 0px 0;
-  }
-
-  .menu-title {
-    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding: 10px;
   }
 
   .mega-overlay {
     position: relative;
     top: 0;
-    box-shadow: none;
-    max-height: unset;
+      height: auto;
   }
 
   .mega-panel {
+    max-height: none;
     flex-direction: column;
-    padding: 5px 0;
-    gap: 5px;
+    padding: 10px;
+    gap: 10px;
     box-shadow: none;
     border-radius: 0;
+        overflow: visible;
+  }
+
+  .back-btn {
+    display: block;
   }
 
   .products-wrap {
     padding-left: 12px;
   }
+}
+
+@media (max-width: 768px) {
+
+  .menu-title,
+  .sub-head {
+    padding-right: 20px;
+  }
+}
+
+/* ================= SEARCH ================= */
+.mega-search {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+  outline: none;
+}
+
+/* ================= READ MORE ================= */
+.read-more {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: #0d6efd;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ================= SKELETON ================= */
+.skeleton {
+  height: 60px;
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 25%,
+    #f3f4f6 37%,
+    #e5e7eb 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton 1.4s ease infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeleton {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+/* ================= ACCESSIBILITY ================= */
+.menu-title:focus,
+.sub-head:focus,
+.mega-product:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
