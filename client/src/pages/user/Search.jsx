@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import api from "../../api/apiClient";
+import {useThemeStore} from '../../stores/themeStore';
 
 import ProductCard from "../../components/ui/ProductCard";
 import Pagination from "../../components/ui/Pagination";
@@ -20,6 +21,7 @@ export default function Search() {
     const [related, setRelated] = useState([]);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const theme = useThemeStore((state)=>state.theme);
 
 
     // 🔹 FETCH SEARCH PRODUCTS
@@ -77,7 +79,7 @@ export default function Search() {
     const bannerImage = data.products[0]?.image ? `${import.meta.env.VITE_API_URL}${data.products[0].image}` : "/search-banner.jpg";
 
     return (
-        <div className="container-fluid p-0 " style={{ background: "#f6f6f6" }}>
+        <div className={`container-fluid p-0 ${theme === 'dark' ? 'bg-dark text-light' : ""} `}  style={{ background: theme === "dark" ? '#121212' : '#f6f6f6', minHeight:"100vh" }}>
             {/* banner */}
             {query && (
                 <div className="text-white text-center d-flex flex-column justify-content-center align-items-center shadow-lg mb-4" style={{ minHeight: "38vh", background: `linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url(${bannerImage}) center/cover no-repeat`, }} >
@@ -85,7 +87,7 @@ export default function Search() {
                     <p className="lead mt-2"> "{query}" — {data.total} products found </p>
                 </div>
             )}
-            <div className="container">
+            <div className="container py-5">
                 {/* 🔹 BREADCRUMB */}
                 <nav aria-label="breadcrumb" className="mb-3">
                     <ol className="breadcrumb">
