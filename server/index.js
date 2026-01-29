@@ -33,7 +33,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Serve /uploads folder statically
+// Serve /uploads folder statically
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes

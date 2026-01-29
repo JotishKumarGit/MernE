@@ -207,6 +207,25 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
+// Get single order by ID
+export const getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    // Ensure the user owns this order or is admin
+    if (req.user.role !== "admin" && order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    res.json({ order });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 /* =====================================================
    ADMIN: UPDATE ORDER STATUS
 ===================================================== */

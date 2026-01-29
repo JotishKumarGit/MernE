@@ -62,7 +62,9 @@ function Register() {
 
         localStorage.setItem("token", response.data.token);
         toast.success(response.data.message || "Registration successful! 🎉");
+
         navigate("/login");
+        console.log(response.data);
       } else {
         toast.error(response.data.message || "Something went wrong!");
       }

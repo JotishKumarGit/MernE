@@ -5,9 +5,9 @@ import crypto from 'crypto';
 // Helper: generate JWT token
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, role: user.role },           // Payload
-    process.env.JWT_SECRET,                      // Secret key
-    { expiresIn: process.env.JWT_EXPIRE }        // Expiry
+    { id: user._id, role: user.role },       
+    process.env.JWT_SECRET,                 
+    { expiresIn: process.env.JWT_EXPIRE }   
   );
 };
 
@@ -173,43 +173,22 @@ export const getProfile = async (req, res) => {
 
 // update profile
 export const updateProfile = async (req, res) => {
-  const user = await User.findById(req.user._id).select('+password');
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  if (!user) return res.status(404).json({ message: 'User not found' });
+    const { name, email, password } = req.body;
 
-  const { name, email, password } = req.body;
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (password) user.password = password;
 
-  if (name) user.name = name;
-  if (email) user.email = email;
-  if (password) user.password = password;
+    if (req.file) {
+      user.profilePic = `/uploads/${req.file.filename}`;
+    }
 
-  //  If new profilePic uploaded
-  if (req.file) {
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload_stream(
-      { resource_type: 'image', folder: 'profile_pics' },
-      async (error, result) => {
-        if (error) return res.status(500).json({ message: 'Cloudinary upload failed' });
-        user.profilePic = result.secure_url;
-        await user.save();
-
-        res.status(200).json({
-          success: true,
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            profilePic: user.profilePic,
-          },
-        });
-      }
-    );
-
-    // Write file stream to cloudinary uploader
-    result.end(req.file.buffer);
-  } else {
     await user.save();
+
     res.status(200).json({
       success: true,
       user: {
@@ -220,8 +199,12 @@ export const updateProfile = async (req, res) => {
         profilePic: user.profilePic,
       },
     });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // toggle wishlist
 export const toggleWishlist = async (req, res) => {
@@ -279,6 +262,3 @@ export const removeFromWishlist = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-
-

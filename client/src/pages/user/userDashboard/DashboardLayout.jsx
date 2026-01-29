@@ -2,23 +2,17 @@ import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../../stores/authStore";
 import { FaBars, FaUserCircle, FaSignOutAlt, FaCog, FaBox, FaUser } from "react-icons/fa";
-import './styles.css'; // contains shared dashboard styles (provided below)
+import './styles.css';
+import getProfilePic from "../../../utills/getProfilePic";
 
-/*
-  Dashboard layout
-  - Controls sidebar open/close via React state (works reliably on mobile)
-  - Fixed topbar
-  - Offcanvas for small screens (class toggling) and fixed sidebar for large screens
-  - Uses NavLink for active link styling
-*/
 export default function DashboardLayout() {
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-
+    const closeOnNavigation = () => setSidebarOpen(false);
     // Close sidebar on route change for better mobile UX
     useEffect(() => {
-        const closeOnNavigation = () => setSidebarOpen(false);
+
         // listen for popstate (back/forward) or you can use React Router hooks in parent
         window.addEventListener("popstate", closeOnNavigation);
         return () => window.removeEventListener("popstate", closeOnNavigation);
@@ -35,12 +29,7 @@ export default function DashboardLayout() {
             <nav className="dashboard-topbar navbar navbar-light bg-white shadow-sm px-3 py-2 fixed-top d-flex align-items-center justify-content-between">
                 <div className="d-flex align-items-center gap-3">
                     {/* Mobile: toggle sidebar */}
-                    <button
-                        className="btn btn-outline-secondary d-lg-none"
-                        type="button"
-                        onClick={() => setSidebarOpen(prev => !prev)}
-                        aria-label={sidebarOpen ? "Close menu" : "Open menu"}
-                    >
+                    <button className="btn btn-outline-secondary d-lg-none" type="button" onClick={() => setSidebarOpen(prev => !prev)} aria-label={sidebarOpen ? "Close menu" : "Open menu"} >
                         <FaBars />
                     </button>
                     <h5 className="mb-0 fw-semibold">User Dashboard</h5>
@@ -48,19 +37,11 @@ export default function DashboardLayout() {
 
                 {/* Profile Dropdown (desktop) */}
                 <div className="dropdown">
-                    <button
-                        className="btn btn-light d-flex align-items-center gap-2 dropdown-toggle border-0"
-                        id="userDropdown"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                    >
+                    <button className="btn btn-light d-flex align-items-center gap-2 dropdown-toggle border-0" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" >
                         <img
-                            src={user?.profilePic || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"}
-                            alt="avatar"
-                            width={36}
-                            height={36}
-                            className="rounded-circle border"
-                        />
+                            // src={user?.profilePic ? `${import.meta.env.VITE_API_URL}${user.profilePic}?t=${Date.now()}` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"} 
+                            src={getProfilePic(user.profilePic)}
+                            width="34" height="34" className="rounded-circle" alt={user.name || "User"} />
                         <span className="fw-medium d-none d-md-inline">{user?.name || "User"}</span>
                     </button>
                     <ul className="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown">
@@ -89,7 +70,10 @@ export default function DashboardLayout() {
                 {/* Sidebar: we toggle a class to show/hide for mobile */}
                 <aside className={`dashboard-sidebar bg-dark text-white ${sidebarOpen ? "open" : ""}`}>
                     <div className="sidebar-header d-flex align-items-center gap-2 p-3 border-bottom border-secondary">
-                        <img src={user?.profilePic || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"} alt="avatar" width={48} height={48} className="rounded-circle border" />
+                        <img
+                            // src={user?.profilePic ? `${import.meta.env.VITE_API_URL}${user.profilePic}?t=${Date.now()}` : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"}
+                            src={getProfilePic(user.profilePic)}
+                            width="34" height="34" className="rounded-circle" alt={user.name || "User"} />
                         <div>
                             <div className="fw-bold">{user?.name || "User"}</div>
                             <small className="text-muted d-block text-white-50">{user?.email}</small>

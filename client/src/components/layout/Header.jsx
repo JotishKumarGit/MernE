@@ -6,6 +6,7 @@ import { MdOutlineLightMode } from "react-icons/md";
 import { useAuthStore } from "../../stores/authStore";
 import { useCartStore } from "../../stores/cartStore";
 import { useThemeStore } from "../../stores/themeStore";
+import getProfilePic from '../../utills/getProfilePic';
 
 import MegaMenu from "./MegaMenu";
 
@@ -35,17 +36,13 @@ function Header() {
 
   return (
     <>
-      {/* =====================================================
-          🔹 TOP INFO BAR
-      ====================================================== */}
+      {/* Top bar */}
       <div className="bg-light border-bottom small py-1 px-3 d-flex justify-content-between">
         <span>📧 jotishk649@gmail.com | 📞 +91 7827710029</span>
         <Link to="/help" className="text-muted text-decoration-none"> Help</Link>
       </div>
 
-      {/* =====================================================
-          🔹 MAIN NAVBAR
-      ====================================================== */}
+      {/* MAIN NAVBAR */}
       <nav className={`navbar navbar-expand-lg shadow-sm py-3 ${theme === "dark" ? "navbar-dark bg-dark" : "navbar-light bg-white"}`}>
         <div className="container-fluid">
 
@@ -104,12 +101,24 @@ function Header() {
               ) : (
                 <div className="dropdown">
                   <button className="btn dropdown-toggle p-0 border-0 bg-transparent" data-bs-toggle="dropdown" >
-                    <img src={user.profilePic || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"} width="34" height="34" className="rounded-circle" alt="User" />
+                    <img
+                      // src={
+                      //   user?.profilePic
+                      //     ? `${import.meta.env.VITE_API_URL}${user.profilePic}?t=${Date.now()}`
+                      //     : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                      // }
+                      // src={user ? user.profilePic : "...."}
+                      src={getProfilePic(user?.profilePic)}
+                      width="34" height="34" className="rounded-circle" alt={user.name || "User"} />
+
                   </button>
 
                   <ul className="dropdown-menu dropdown-menu-end">
                     {user.role === "admin" && (
                       <li> <Link className="dropdown-item" to="/admin/dashboard">Admin Panel</Link></li>
+                    )}
+                    {user.role === "user" && (
+                      <li><Link className="dropdown-item" to="/user/dashboard" >User Dashboard</Link></li>
                     )}
                     <li>
                       <button className="dropdown-item text-danger" onClick={logout} > Logout </button>
